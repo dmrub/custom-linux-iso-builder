@@ -1,0 +1,7 @@
+/install.iso
+/cache
+grub.cfg.*
+isolinux.cfg.*
+ks.cfg.*
+*~
+*.bak
