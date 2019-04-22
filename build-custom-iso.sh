@@ -45,13 +45,13 @@ EVAL=()
 usage() {
     echo "Build custom installation ISO"
     echo
-    echo "$0 [options] [--] configuration-file"
+    echo "$0 [options] [--] configuration-file [configuration-file ...]"
     echo "options:"
     echo "  -d, --debug                Enable debug mode"
     echo "      --help                 Display this help and exit"
     echo "  -c, --cache=CACHE_DIR      Directory in which the downloaded ISO files are stored"
     echo "                             (default: $CACHE_DIR)"
-    echo "  -e,--eval=EXPR             Evaluate expression after configuration file is loaded"
+    echo "  -e,--eval=EXPR             Evaluate expression after all configuration files are loaded"
     echo "      --                     End of options"
 }
 
@@ -121,33 +121,40 @@ DEST_ELTORITO_CATALOG_FILE=
 
 loadconfig() {
     local THIS_DIR
-    local CONFIG_FILE=$1
-    THIS_DIR=$( (cd "$(dirname -- "$CONFIG_FILE")" && pwd -P) )
+    local CONFIG_FILE
 
-    if [[ -r "$CONFIG_FILE" ]]; then
-        message "Loading $CONFIG_FILE"
+    # Unset configuration variables
+    unset \
+        CFG_MODE \
+        DEST_ISO_INIT_DIR \
+        DEST_EFIBOOT_IMAGE_FILE \
+        DEST_ISOLINUX_CFG_FILE \
+        DEST_GRUB_CFG_FILE \
+        DEST_ELTORITO_BOOT_FILE \
+        DEST_ELTORITO_CATALOG_FILE \
+        \
+        OS_IMAGE_URL \
+        OS_IMAGE_FILE \
+        OS_IMAGE_SHA256 \
+        DISK_LABEL \
+        KICKSTART_CFG_FILE \
+        PRESEED_CFG_FILE \
+        ISOLINUX_CFG_FILE \
+        GRUB_CFG_FILE
 
-        unset \
-            CFG_MODE \
-            DEST_ISO_INIT_DIR \
-            DEST_EFIBOOT_IMAGE_FILE \
-            DEST_ISOLINUX_CFG_FILE \
-            DEST_GRUB_CFG_FILE \
-            DEST_ELTORITO_BOOT_FILE \
-            DEST_ELTORITO_CATALOG_FILE \
-            \
-            OS_IMAGE_URL \
-            OS_IMAGE_FILE \
-            OS_IMAGE_SHA256 \
-            DISK_LABEL \
-            KICKSTART_CFG_FILE \
-            PRESEED_CFG_FILE \
-            ISOLINUX_CFG_FILE \
-            GRUB_CFG_FILE \
+    for CONFIG_FILE in "$@"; do
+        THIS_DIR=$( (cd "$(dirname -- "$CONFIG_FILE")" && pwd -P) )
 
-        # shellcheck disable=SC1090
-        source "$CONFIG_FILE"
-    fi
+        if [[ -r "$CONFIG_FILE" ]]; then
+            message "Loading $CONFIG_FILE"
+
+
+            # shellcheck disable=SC1090
+            source "$CONFIG_FILE"
+        else
+            fatal "File $CONFIG_FILE is not readable"
+        fi
+    done
 
     # Check configuration
     if [[ -z "$KICKSTART_CFG_FILE" && -z "$PRESEED_CFG_FILE" ]]; then
@@ -183,10 +190,31 @@ loadconfig() {
     fi
 }
 
+# This allows functions referenced in templates to receive additional
+# options and arguments. This puts the content from the
+# template directly into an eval statement. Use with extreme care.
+MO_ALLOW_FUNCTION_ARGUMENTS=1
+
+# The string "false" will be treated as an empty value for the purposes
+# of conditionals.
+MO_FALSE_IS_EMPTY=1
+
+ifequal() {
+    if [[ "$1" = "$2" ]]; then
+        cat
+    fi
+}
+
+ifnotequal() {
+    if [[ "$1" != "$2" ]]; then
+        cat
+    fi
+}
+
 # shellcheck source=mo
 source "$THIS_DIR/mo"
 
-loadconfig "$1"
+loadconfig "$@"
 
 for expr in "${EVAL[@]}"; do
     eval "${expr}"
