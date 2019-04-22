@@ -26,6 +26,13 @@ else
     INIT_USER_HOME=/home/$INIT_USER
 fi
 
+# Timezone (e.g.: UTC, "Europe/Berlin", see /usr/share/zoneinfo/ for more)
+INIT_TZ=Europe/Berlin
+
+# Partitioning mode (PART_LVM = true | false)
+PART_LVM=false
+PART_DEFAULT_FS=ext4 # ext4 | btrfs
+
 PRESEED_KERNEL_OPTIONS="auto=true \
 priority=critical \
 console-setup/ask_detect=false \
