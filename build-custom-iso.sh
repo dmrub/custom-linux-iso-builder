@@ -40,6 +40,7 @@ message() {
 
 CACHE_DIR=$THIS_DIR/cache
 DEBUG=
+EVAL=()
 
 usage() {
     echo "Build custom installation ISO"
@@ -50,6 +51,7 @@ usage() {
     echo "      --help                 Display this help and exit"
     echo "  -c, --cache=CACHE_DIR      Directory in which the downloaded ISO files are stored"
     echo "                             (default: $CACHE_DIR)"
+    echo "  -e,--eval=EXPR             Evaluate expression after configuration file is loaded"
     echo "      --                     End of options"
 }
 
@@ -66,6 +68,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --cache=*)
             CACHE_DIR="${1#*=}"
+            shift
+            ;;
+        -e|--eval)
+            EVAL+=("$2")
+            shift 2
+            ;;
+        --eval=*)
+            EVAL+=("${1#*=}")
             shift
             ;;
         --help)
@@ -177,6 +187,10 @@ loadconfig() {
 source "$THIS_DIR/mo"
 
 loadconfig "$1"
+
+for expr in "${EVAL[@]}"; do
+    eval "${expr}"
+done
 
 for cmd in mkisofs isohybrid; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
