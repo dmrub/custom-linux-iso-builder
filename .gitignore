@@ -2,6 +2,7 @@
 /cache
 grub.cfg.*
 isolinux.cfg.*
+preseed.cfg.*
 ks.cfg.*
 *~
 *.bak
