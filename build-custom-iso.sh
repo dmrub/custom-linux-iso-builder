@@ -38,7 +38,58 @@ message() {
     echo "$*"
 }
 
+# http://stackoverflow.com/questions/1203583/how-do-i-rename-a-bash-function
+# http://unix.stackexchange.com/questions/29689/how-do-i-redefine-a-bash-function-in-terms-of-old-definition
+copy-fn() {
+    local fn;
+    fn="$(declare -f "$1")" && eval "function $(printf %q "$2") ${fn#*"()"}";
+}
+
+rename-fn() {
+    copy-fn "$@" && unset -f "$1";
+}
+
+# https://www.linuxjournal.com/content/normalizing-path-names-bash
+
+normpath() {
+    # Remove all /./ sequences.
+    local path=${1//\/.\//\/}
+
+    # Remove dir/.. sequences.
+    while [[ $path =~ ([^/][^/]*/\.\./) ]]; do
+        path=${path/${BASH_REMATCH[0]}/}
+    done
+    echo "$path"
+}
+
+if test -x /usr/bin/realpath; then
+    abspath() {
+        if [[ -d "$1" || -d "$(dirname "$1")" ]]; then
+            /usr/bin/realpath "$1"
+        else
+            case "$1" in
+                "" | ".") echo "$PWD";;
+                /*) normpath "$1";;
+                *)  normpath "$PWD/$1";;
+            esac
+        fi
+    }
+else
+    abspath() {
+        if [[ -d "$1" ]]; then
+            (cd "$1"; pwd)
+        else
+            case "$1" in
+                "" | ".") echo "$PWD";;
+                /*) normpath "$1";;
+                *)  normpath "$PWD/$1";;
+            esac
+        fi
+    }
+fi
+
 CACHE_DIR=$THIS_DIR/cache
+OUTPUT_FILE=install.iso
 DEBUG=
 EVAL=()
 
@@ -47,19 +98,25 @@ usage() {
     echo
     echo "$0 [options] [--] configuration-file [configuration-file ...]"
     echo "options:"
-    echo "  -d, --debug                Enable debug mode"
-    echo "      --help                 Display this help and exit"
+    echo "  -o, --output=OUTPUT_FILE   Specify the output file for the the ISO9660 filesystem image."
+    echo "                             (default: $OUTPUT_FILE)"
     echo "  -c, --cache=CACHE_DIR      Directory in which the downloaded ISO files are stored"
     echo "                             (default: $CACHE_DIR)"
     echo "  -e,--eval=EXPR             Evaluate expression after all configuration files are loaded"
+    echo "  -d, --debug                Enable debug mode"
+    echo "      --help                 Display this help and exit"
     echo "      --                     End of options"
 }
 
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -d|--debug)
-            DEBUG=true
+        -o|--output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        --output=*)
+            OUTPUT_FILE="${1#*=}"
             shift
             ;;
         -c|--cache)
@@ -76,6 +133,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --eval=*)
             EVAL+=("${1#*=}")
+            shift
+            ;;
+        -d|--debug)
+            DEBUG=true
             shift
             ;;
         --help)
@@ -95,8 +156,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ "$#" -ne 1 ]]; then
-    fatal "No configuration file specified"
+if [[ "$#" -lt 1 ]]; then
+    usage
+    fatal "No configuration files specified"
 fi
 
 if [[ ! -r "$1" ]]; then
@@ -119,9 +181,17 @@ DEST_ELTORITO_BOOT_FILE=
 # DEST_ELTORITO_CATALOG_FILE : Path to El Torito catalog file relative to disk root
 DEST_ELTORITO_CATALOG_FILE=
 
+# _RUN_BEFORE_BUILD : List of function names to be executed before build
+_RUN_BEFORE_BUILD=()
+
+before-build-callback-index() {
+    echo "${#_RUN_BEFORE_BUILD[@]}"
+}
+
 loadconfig() {
     local THIS_DIR
     local CONFIG_FILE
+    local CB_NAME
 
     # Unset configuration variables
     unset \
@@ -148,9 +218,18 @@ loadconfig() {
         if [[ -r "$CONFIG_FILE" ]]; then
             message "Loading $CONFIG_FILE"
 
-
             # shellcheck disable=SC1090
             source "$CONFIG_FILE"
+
+            # Register callbacks
+            if declare -F before-build > /dev/null; then
+                # Each config file can define callback with the same name,
+                # rename callback function to avoid collisions
+                CB_NAME=before-build-$(before-build-callback-index)
+                rename-fn before-build "$CB_NAME"
+                _RUN_BEFORE_BUILD+=("$CB_NAME")
+            fi
+
         else
             fatal "File $CONFIG_FILE is not readable"
         fi
@@ -188,6 +267,10 @@ loadconfig() {
     if [[ -z "$OS_IMAGE_FILE" ]]; then
         OS_IMAGE_FILE=$(basename "$OS_IMAGE_URL")
     fi
+
+    for CB_NAME in "${_RUN_BEFORE_BUILD[@]}"; do
+        "$CB_NAME"
+    done
 }
 
 # This allows functions referenced in templates to receive additional
@@ -493,12 +576,12 @@ mkisofs -U -r -v -T -J -joliet-long \
         -b "$DEST_ELTORITO_BOOT_FILE" -c "$DEST_ELTORITO_CATALOG_FILE" \
         -no-emul-boot -boot-load-size 4 \
         -boot-info-table -eltorito-alt-boot -e "$DEST_EFIBOOT_IMAGE_FILE" \
-        -no-emul-boot -o install.iso "$DISK_DIR/"
+        -no-emul-boot -o "$OUTPUT_FILE" "$DISK_DIR/"
 
 # Setup UEFI boot for ISO disk
-isohybrid --uefi install.iso
+isohybrid --uefi "$OUTPUT_FILE"
 
-echo "* Created boot image in $PWD/install.so"
+echo "* Created installation ISO image in $(abspath "$OUTPUT_FILE")"
 echo "* Image Source: $OS_IMAGE_URL"
 if [[ -n "$KICKSTART_CFG_FILE" ]]; then
     echo "* Kickstart Config File: $KICKSTART_CFG_FILE"
