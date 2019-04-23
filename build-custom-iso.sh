@@ -94,7 +94,7 @@ DEBUG=
 EVAL=()
 
 usage() {
-    echo "Build custom installation ISO"
+    echo "Build custom installation ISO 9660 image"
     echo
     echo "$0 [options] [--] configuration-file [configuration-file ...]"
     echo "options:"
