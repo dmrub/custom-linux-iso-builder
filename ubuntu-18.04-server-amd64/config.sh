@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 
-OS_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu/releases/bionic/release/ubuntu-18.04.2-server-amd64.iso
+OS_IMAGE_URL=http://old-releases.ubuntu.com/releases/18.04.2/ubuntu-18.04.2-server-amd64.iso
 OS_IMAGE_SHA256=a2cb36dc010d98ad9253ea5ad5a07fd6b409e3412c48f1860536970b073c98f5
 DISK_LABEL="CustomUbuntu"
 
