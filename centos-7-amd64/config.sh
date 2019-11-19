@@ -36,6 +36,10 @@ INIT_USER_HOME() {
     fi
 }
 
+# Partitioning mode (PART_LVM = true | false)
+PART_LVM=false
+PART_DEFAULT_FS=ext4 # ext4 | xfs
+
 before-build() {
     # Sanity checks
     if [[ -n "$INIT_CRYPTED_ROOTPW" && -n "$INIT_ROOTPW" ]]; then
