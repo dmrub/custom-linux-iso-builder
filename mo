@@ -654,7 +654,8 @@ moParse() {
                     if moIsFunction "$moTag"; then
                         #: Consider piping the output to moGetContent
                         #: so the lambda does not execute in a subshell?
-                        moContent=$(moCallFunction "$moTag" "${moBlock[0]}" "$moArgs")
+                        moContent=$(moCallFunction "$moTag" "${moBlock[0]}" "$moArgs" && printf x)
+                        moContent=${moContent%x}
                         moParse "$moContent" "$moCurrent" false
                         moContent="${moBlock[2]}"
                     elif moIsArray "$moTag"; then
