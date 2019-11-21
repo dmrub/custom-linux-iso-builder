@@ -294,6 +294,15 @@ ifnotequal() {
     fi
 }
 
+# Set array from lines of stdin
+# $1 - Destination variable
+set-array-from-lines() {
+    local line result
+    result=()
+    while IFS='' read -r line; do result+=("$line"); done
+    local "$1" && moIndirectArray "$1" "${result[@]}"
+}
+
 # shellcheck source=mo
 source "$THIS_DIR/mo"
 

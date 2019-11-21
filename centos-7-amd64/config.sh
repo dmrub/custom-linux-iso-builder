@@ -37,8 +37,22 @@ INIT_USER_HOME() {
 }
 
 # Partitioning mode (PART_LVM = true | false)
-PART_LVM=false
+PART_MODE=plain # lvm | btrfs | plain | custom
 PART_DEFAULT_FS=ext4 # ext4 | xfs
+
+LVM_VG_NAME=centos_vg
+
+set-array-from-lines PART_CUSTOM <<EOF
+part /boot --fstype="xfs" --ondisk=$INIT_DISK --size=1024
+part /boot/efi --fstype="efi" --ondisk=$INIT_DISK --size=200 --fsoptions="umask=0077,shortname=winnt"
+
+part pv.1173 --fstype="lvmpv" --ondisk=$INIT_DISK --size=952644 --grow
+
+volgroup $LVM_VG_NAME --pesize=4096 pv.1173
+logvol /  --fstype="xfs" --size=204800 --name=root --vgname=$LVM_VG_NAME
+logvol swap  --fstype="swap" --size=8000 --name=swap --vgname=$LVM_VG_NAME
+# logvol /data  --fstype="xfs" --size=740036 --name=data --vgname=$LVM_VG_NAME
+EOF
 
 before-build() {
     # Sanity checks
