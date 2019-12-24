@@ -20,6 +20,7 @@ VIRSH_POOL=default
 VIRSH_VOLUME_NAME=
 VIRSH_DEBUG=
 DELETE_VOLUME_FIRST=false
+VIRSH_VOLUME_FORMAT=raw
 
 usage() {
     echo "Upload image to virsh pool"
@@ -33,6 +34,8 @@ usage() {
     echo "                             (default: input image file name)"
     echo "      --delete-first         delete volume before creation"
     echo "                             (default: $DELETE_VOLUME_FIRST)"
+    echo "      --format               file format type raw,bochs,qcow,qcow2,qed,vmdk"
+    echo "                             (default: $VIRSH_VOLUME_FORMAT)"
     echo "  -d, --debug=NUM            debug level [0-4]"
     echo "      --help                 Display this help and exit"
     echo "      --                     End of options"
@@ -68,6 +71,15 @@ while [[ $# -gt 0 ]]; do
             DELETE_VOLUME_FIRST=true
             shift
             ;;
+        --format)
+            VIRSH_VOLUME_FORMAT=$2
+            shift 2
+            ;;
+        --format=*)
+            VIRSH_VOLUME_FORMAT=${1#*=}
+            shift
+            ;;
+
         -d|--debug)
             VIRSH_DEBUG=$2
             shift
@@ -122,6 +134,6 @@ fi
 
 FILE_SIZE=$(stat -Lc%s "$1")
 message "* Create virsh volume $VIRSH_VOLUME_NAME in pool $VIRSH_POOL"
-virsh "${VIRSH_OPTS[@]}" vol-create-as "$VIRSH_POOL" "$VIRSH_VOLUME_NAME" "$FILE_SIZE" --format raw
+virsh "${VIRSH_OPTS[@]}" vol-create-as "$VIRSH_POOL" "$VIRSH_VOLUME_NAME" "$FILE_SIZE" --format "$VIRSH_VOLUME_FORMAT"
 echo "* Upload file $1 to volume $VIRSH_VOLUME_NAME in pool $VIRSH_POOL"
 virsh "${VIRSH_OPTS[@]}" vol-upload --pool "$VIRSH_POOL" "$VIRSH_VOLUME_NAME" "$1"
