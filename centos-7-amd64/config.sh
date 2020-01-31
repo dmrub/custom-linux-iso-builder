@@ -43,7 +43,7 @@ INIT_USER_HOME() {
 #   Check ks.cfg for supported combinations !
 
 PART_TOOL=part       # autopart | part
-PART_MODE=plain      # lvm | btrfs | plain | custom
+PART_MODE=script     # lvm | btrfs | plain | custom | script
 PART_BOOT=uefi       # uefi | bios
 PART_DEFAULT_FS=ext4 # ext4 | xfs
 
