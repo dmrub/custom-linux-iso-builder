@@ -36,8 +36,15 @@ INIT_USER_HOME() {
     fi
 }
 
-# Partitioning mode (PART_LVM = true | false)
-PART_MODE=plain # lvm | btrfs | plain | custom
+# Partitioning mode
+# Note:
+#   Due to the problems with the autopart command in CentOS 7
+#   we support manual partitioning with part but not in all combinations.
+#   Check ks.cfg for supported combinations !
+
+PART_TOOL=part       # autopart | part
+PART_MODE=plain      # lvm | btrfs | plain | custom
+PART_BOOT=uefi       # uefi | bios
 PART_DEFAULT_FS=ext4 # ext4 | xfs
 
 LVM_VG_NAME=centos_vg
