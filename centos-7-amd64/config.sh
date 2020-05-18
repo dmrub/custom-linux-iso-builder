@@ -3,8 +3,11 @@
 #OS_IMAGE_URL=http://archive.kernel.org/centos-vault/7.6.1810/isos/x86_64/CentOS-7-x86_64-Minimal-1810.iso
 #OS_IMAGE_SHA256=38d5d51d9d100fd73df031ffd6bd8b1297ce24660dc8c13a3b8b4534a4bd291c
 
-OS_IMAGE_URL=http://mirror.ratiokontakt.de/mirror/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-Minimal-1908.iso
-OS_IMAGE_SHA256=9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d
+#OS_IMAGE_URL=http://mirror.ratiokontakt.de/mirror/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-Minimal-1908.iso
+#OS_IMAGE_SHA256=9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d
+
+OS_IMAGE_URL=http://ftp.tu-chemnitz.de/pub/linux/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso
+OS_IMAGE_SHA256=659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193
 
 DISK_LABEL="CentOS 7 x86_64"
 
