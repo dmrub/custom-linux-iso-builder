@@ -258,7 +258,7 @@ echo "Start QEMU image $IMAGE_FILE"
 echo "Connect to it via VNC: vncviewer localhost:59"
 (
     set -xe;
-    "$QEMU_TOOL" \
+    time "$QEMU_TOOL" \
         -m "$RAM_SIZE" \
         -name "$IMAGE_NAME" \
         -netdev user,id=user.0,hostfwd=tcp::5940-:22 \

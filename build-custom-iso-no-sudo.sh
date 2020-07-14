@@ -16,6 +16,8 @@ DISK_LABEL=
 KICKSTART_CFG_FILE=
 # PRESEED_CFG_FILE : path to preseed configuration file (for Debian / Ubuntu - OS family)
 PRESEED_CFG_FILE=
+# CUSTOM_CFG_FILES : array of paths to custom configuration files
+CUSTOM_CFG_FILES=()
 # ISOLINUX_CFG_FILE : path to isolinux configuration file
 ISOLINUX_CFG_FILE=
 # GRUB_CFG_FILE : path to GRUB configuration file
@@ -47,6 +49,17 @@ copy-fn() {
 
 rename-fn() {
     copy-fn "$@" && unset -f "$1";
+}
+
+is-true() {
+    case "$1" in
+        true | yes | 1) return 0 ;;
+    esac
+    return 1
+}
+
+is-array() {
+    declare -p "$1" &>/dev/null && [[ "$(declare -p "$1")" =~ "declare -a" ]]
 }
 
 # https://www.linuxjournal.com/content/normalizing-path-names-bash
@@ -166,7 +179,7 @@ if [[ ! -r "$1" ]]; then
 fi
 CONFIG_FILE=$1
 
-# CFG_MODE : kickstart | preseed
+# CFG_MODE : kickstart | preseed | custom
 CFG_MODE=
 # DEST_ISO_INIT_DIR : directory with init file (kickstart/preseed) relative to disk root
 DEST_ISO_INIT_DIR=
@@ -210,6 +223,7 @@ loadconfig() {
         KICKSTART_CFG_FILE \
         PRESEED_CFG_FILE \
         ISOLINUX_CFG_FILE \
+        CUSTOM_CFG_FILES \
         GRUB_CFG_FILE
 
     for CONFIG_FILE in "$@"; do
@@ -235,34 +249,63 @@ loadconfig() {
         fi
     done
 
-    # Check configuration
-    if [[ -z "$KICKSTART_CFG_FILE" && -z "$PRESEED_CFG_FILE" ]]; then
-        fatal "Neither KICKSTART_CFG_FILE nor PRESEED_CFG_FILE variable is set"
+    if ! is-array CUSTOM_CFG_FILES; then
+        if [[ -z ${CUSTOM_CFG_FILES+x} ]]; then
+            CUSTOM_CFG_FILES=()
+        else
+            # shellcheck disable=SC2128
+            read -r -a CUSTOM_CFG_FILES <<< "$CUSTOM_CFG_FILES"
+        fi
     fi
 
-    if [[ -n "$KICKSTART_CFG_FILE" && -n "$PRESEED_CFG_FILE" ]]; then
-        fatal "Either KICKSTART_CFG_FILE or PRESEED_CFG_FILE variable should be set, but not both"
-    fi
+    local num_cfg
+    num_cfg=0
 
     if [[ -n "$KICKSTART_CFG_FILE" ]]; then
+        ((++num_cfg))
         CFG_MODE=kickstart
-        if [[ -z "$DEST_ISO_INIT_DIR" ]]; then
-            DEST_ISO_INIT_DIR=ks
-        fi
-        #DEST_EFIBOOT_IMAGE_FILE=images/efiboot.img
-        #DEST_ISOLINUX_CFG_FILE=isolinux/isolinux.cfg
-        #DEST_GRUB_CFG_FILE=EFI/BOOT/grub.cfg
+    fi
+    if [[ -n "$PRESEED_CFG_FILE" ]]; then
+        ((++num_cfg))
+        CFG_MODE=preseed
+    fi
+    if [[ "${#CUSTOM_CFG_FILES}" -ne 0 ]]; then
+        ((++num_cfg))
+        CFG_MODE=custom
     fi
 
-    if [[ -n "$PRESEED_CFG_FILE" ]]; then
-        CFG_MODE=preseed
-        if [[ -z "$DEST_ISO_INIT_DIR" ]]; then
-            DEST_ISO_INIT_DIR=preseed
-        fi
-        #DEST_EFIBOOT_IMAGE_FILE=boot/grub/efi.img
-        #DEST_ISOLINUX_CFG_FILE=isolinux.cfg
-        #DEST_GRUB_CFG_FILE=boot/grub/grub.cfg
+    # Check configuration
+    if [[ $num_cfg -eq 0 ]]; then
+        fatal "Neither KICKSTART_CFG_FILE nor PRESEED_CFG_FILE nor CUSTOM_CFG_FILES variable is set"
     fi
+
+    if [[ $num_cfg -gt 1 ]]; then
+        fatal "Either KICKSTART_CFG_FILE or PRESEED_CFG_FILE or CUSTOM_CFG_FILES variable should be set, but not more than one"
+    fi
+
+    case "$CFG_MODE" in
+        kickstart)
+            if [[ -z "$DEST_ISO_INIT_DIR" ]]; then
+                DEST_ISO_INIT_DIR=ks
+            fi
+            #DEST_EFIBOOT_IMAGE_FILE=images/efiboot.img
+            #DEST_ISOLINUX_CFG_FILE=isolinux/isolinux.cfg
+            #DEST_GRUB_CFG_FILE=EFI/BOOT/grub.cfg
+            ;;
+        preseed)
+            if [[ -z "$DEST_ISO_INIT_DIR" ]]; then
+                DEST_ISO_INIT_DIR=preseed
+            fi
+            #DEST_EFIBOOT_IMAGE_FILE=boot/grub/efi.img
+            #DEST_ISOLINUX_CFG_FILE=isolinux.cfg
+            #DEST_GRUB_CFG_FILE=boot/grub/grub.cfg
+            ;;
+        custom)
+            if [[ -z "$DEST_ISO_INIT_DIR" ]]; then
+                DEST_ISO_INIT_DIR=custom
+            fi
+            ;;
+    esac
 
     if [[ -z "$OS_IMAGE_FILE" ]]; then
         OS_IMAGE_FILE=$(basename "$OS_IMAGE_URL")
@@ -549,6 +592,14 @@ fi
 if [[ -n "$PRESEED_CFG_FILE" ]]; then
     chmod u+rwx "$DISK_DIR/$DEST_ISO_INIT_DIR"
     mo < "$PRESEED_CFG_FILE" | tee "preseed.cfg.${TIMESTAMP}" > "$DISK_DIR/$DEST_ISO_INIT_DIR/preseed.cfg"
+fi
+
+if [[ "${#CUSTOM_CFG_FILES}" -ne 0 ]]; then
+    chmod u+rwx "$DISK_DIR/$DEST_ISO_INIT_DIR"
+    for f in "${CUSTOM_CFG_FILES[@]}"; do
+        bn=$(basename -- "$f")
+        mo < "$f" | tee "$bn.${TIMESTAMP}" > "$DISK_DIR/$DEST_ISO_INIT_DIR/$bn"
+    done
 fi
 
 detect-files DEST_ISOLINUX_CFG_FILE "ISOLINUX config file" isolinux/isolinux.cfg isolinux.cfg

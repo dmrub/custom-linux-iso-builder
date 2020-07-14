@@ -1,0 +1,42 @@
+# user-data bios
+{{#PART_LVM}}
+storage:
+  layout:
+    name: lvm
+{{/PART_LVM}}
+{{^PART_LVM}}
+storage:
+  config:
+  - type: disk
+    id: root-disk
+    path: "/dev/{{INIT_DISK}}"
+    ptable: gpt
+    wipe: superblock-recursive
+    preserve: false
+    grub_device: true
+    name: system
+  - type: partition
+    id: partition-0
+    device: root-disk
+    size: 1M
+    flag: bios_grub
+    number: 1
+    preserve: false
+  - type: partition
+    id: partition-1
+    device: root-disk
+    size: -1
+    wipe: superblock
+    flag: ''
+    number: 2
+    preserve: false
+  - fstype: "{{PART_DEFAULT_FS}}"
+    id: format-0
+    preserve: false
+    type: format
+    volume: partition-1
+  - device: format-0
+    id: mount-0
+    path: /
+    type: mount
+{{/PART_LVM}}

@@ -1,0 +1,44 @@
+#cloud-config
+autoinstall:
+  version: 1
+  refresh-installer:
+    update: yes
+  apt:
+    geoip: true
+    preserve_sources_list: false
+    primary:
+    - arches: [amd64, i386]
+      uri: http://de.archive.ubuntu.com/ubuntu
+    - arches: [default]
+      uri: http://ports.ubuntu.com/ubuntu-ports
+  identity:
+    hostname: "{{INIT_HOSTNAME}}"
+    password: "{{INIT_CRYPTED_USERPW}}"
+    realname: "{{INIT_USER_FULLNAME}}"
+    username: "{{INIT_USER}}"
+  keyboard:
+    layout: us
+  locale: en_US
+  user-data:
+    timezone: "{{INIT_TZ}}"
+  early-commands:
+    # remove YAML '...' end of document before appending
+    - sed -i 's/^\.\.\.//g' /autoinstall.yaml
+    - if [ -e /sys/firmware/efi ]; then
+        cat "/cdrom/{{DEST_ISO_INIT_DIR}}/user-data.uefi" >> /autoinstall.yaml;
+      else
+        cat "/cdrom/{{DEST_ISO_INIT_DIR}}/user-data.bios" >> /autoinstall.yaml;
+      fi
+  late-commands:
+    - shutdown now
+  #network:
+  #  ethernets:
+  #    enp0s3: {dhcp4: true}
+  #  version: 2
+  ssh:
+    allow-pw: true
+    install-server: true
+    authorized-keys: {{^INIT_AUTHORIZED_KEYS}}[]{{/INIT_AUTHORIZED_KEYS}}
+{{#INIT_AUTHORIZED_KEYS}}
+      - "{{.}}"
+{{/INIT_AUTHORIZED_KEYS}}
