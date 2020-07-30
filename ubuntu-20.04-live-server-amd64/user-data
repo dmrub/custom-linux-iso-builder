@@ -31,10 +31,16 @@ autoinstall:
       fi
   late-commands:
     - shutdown now
-  #network:
-  #  ethernets:
-  #    enp0s3: {dhcp4: true}
-  #  version: 2
+  network:
+    # 'network' repeated twice due to a bug in 20.04 GA
+    # https://ubuntu.com/server/docs/install/autoinstall-reference#network
+    network:
+      ethernets:
+        eth:
+          match:
+            name: "*"
+          dhcp4: true
+      version: 2
   ssh:
     allow-pw: true
     install-server: true
