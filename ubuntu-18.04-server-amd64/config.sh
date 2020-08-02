@@ -3,8 +3,11 @@
 #OS_IMAGE_URL=http://old-releases.ubuntu.com/releases/18.04.2/ubuntu-18.04.2-server-amd64.iso
 #OS_IMAGE_SHA256=a2cb36dc010d98ad9253ea5ad5a07fd6b409e3412c48f1860536970b073c98f5
 
-OS_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu/releases/bionic/release/ubuntu-18.04.3-server-amd64.iso
-OS_IMAGE_SHA256=7d8e0055d663bffa27c1718685085626cb59346e7626ba3d3f476322271f573e
+#OS_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu/releases/bionic/release/ubuntu-18.04.3-server-amd64.iso
+#OS_IMAGE_SHA256=7d8e0055d663bffa27c1718685085626cb59346e7626ba3d3f476322271f573e
+
+OS_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu/releases/bionic/release/ubuntu-18.04.4-server-amd64.iso
+OS_IMAGE_SHA256=e2ecdace33c939527cbc9e8d23576381c493b071107207d2040af72595f8990b
 
 DISK_LABEL="CustomUbuntu"
 
