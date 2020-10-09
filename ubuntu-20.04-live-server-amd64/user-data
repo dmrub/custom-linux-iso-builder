@@ -38,7 +38,7 @@ autoinstall:
       ethernets:
         eth:
           match:
-            name: "*"
+            name: "e*"
           dhcp4: true
       version: 2
   ssh:
