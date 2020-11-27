@@ -7,8 +7,11 @@
 
 
 # shellcheck disable=SC2034
-OS_IMAGE_URL=https://ftp.halifax.rwth-aachen.de/ubuntu-releases/20.04/ubuntu-20.04-live-server-amd64.iso
-OS_IMAGE_SHA256=caf3fd69c77c439f162e2ba6040e9c320c4ff0d69aad1340a514319a9264df9f
+OS_IMAGE_URL=https://releases.ubuntu.com/20.04/ubuntu-20.04.1-live-server-amd64.iso
+OS_IMAGE_SHA256=443511f6bf12402c12503733059269a2e10dec602916c0a75263e5d990f6bb93
+
+#OS_IMAGE_URL=https://ftp.halifax.rwth-aachen.de/ubuntu-releases/20.04/ubuntu-20.04-live-server-amd64.iso
+#OS_IMAGE_SHA256=caf3fd69c77c439f162e2ba6040e9c320c4ff0d69aad1340a514319a9264df9f
 
 #OS_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu-server/focal/daily-live/current/focal-live-server-amd64.iso
 #OS_IMAGE_SHA256=ff90c880737b36d61c5059e07d987236144958b7144aae34a4da994a881d8103
