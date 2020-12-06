@@ -196,7 +196,7 @@ if [[ -z "$IMAGE_FILE" ]]; then
     if [[ -z "$IMAGE_NAME" ]]; then
         fatal "Specify QEMU image name or QEMU image file"
     fi
-    IMAGE_FILE=$THIS_DIR/$IMAGE_NAME-$RAM_SIZE-$IMAGE_SIZE.$IMAGE_FORMAT
+    IMAGE_FILE=$THIS_DIR/$IMAGE_NAME-$IMAGE_SIZE.$IMAGE_FORMAT
 fi
 
 if [[ -z "$IMAGE_NAME" ]]; then
